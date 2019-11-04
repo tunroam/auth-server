@@ -51,7 +51,11 @@ EOF
 
 # in section authorize in sites-enabled/default
 # place python under filter_username
-sed -i 's/filter_username$/filter_username\npython/g' sites-enabled/default
+sed -i 's/filter_username$/filter_username\npython/g' \
+  sites-enabled/default \
+  sites-enabled/inner-tunnel
+# The inner-tunnel needs the clear-text password
+
 cd -
 
 cat << EOF > /testscript.sh
