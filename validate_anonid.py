@@ -119,7 +119,7 @@ def socket2rule(addr: str, ipproto: int, port: str):
   https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes
   https://wiki.nftables.org/wiki-nftables/index.php/Simple_rule_management
   """
-  result = "iptables -A OUTPUT -j ACCEPT -d " + addr + " --protocol " + str(ipproto)
+  result = "iptables-nft -A OUTPUT -j ACCEPT -d " + addr + " --protocol " + str(ipproto)
   if port and port.isdigit():
     result += " --dport " + port
   return result
