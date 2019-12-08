@@ -23,12 +23,22 @@ apt install -y \
 # we first install python, so its already installed when installing freeradius
 # https://stackoverflow.com/questions/45371531/failed-to-link-to-module-rlm-python-rlm-python-so
 apt install -y \
-  freeradius \
-  curl \
-  freeradius-python2
+  git \
+  curl
+
+echo TODO here
+git clone https://github.com/FreeRADIUS/freeradius-server.git
+cd freeradius-server
+exit 0
+./configure
+make
+make install
+
+exit 0
 
 
 cp python3wrapper.py /etc/freeradius/*/mods-config/python/
+cat append2proxy.conf >> /etc/freeradius/*/proxy.conf
 cp validate_anonid.py /usr/local/bin/
 
 
@@ -62,7 +72,7 @@ cat << EOF > /testscript.sh
 freeradius -X &
 sleep 2
 # src: https://github.com/FreeRADIUS/freeradius-server/issues/2351
-echo "User-Name=06443_00testa@tunroam.lent.ink,Chap-Password=password" \
+echo "User-Name=06443_00testb@tunroam.lent.ink,Chap-Password=password" \
   | radclient -x localhost auth testing123
 EOF
 chmod +x /testscript.sh

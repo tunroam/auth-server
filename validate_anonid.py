@@ -193,7 +193,6 @@ def validateAnonymousIdentity(anonid: str):
     return idobj
   
   if idobj['flags']['validate_certificate']:
-    return "ERROR proxying request not implemented = future work. TODO"
     eap_addr = idobj['realm']
     if idobj['isFQDN']:
       vpn_addr = 'vpn.' + idobj['realm']

@@ -19,6 +19,7 @@ import sys
 # thus we use a workaround, found here:
 # https://docs.openstack.org/bandit/1.4.0/plugins/start_process_with_a_shell.html
 import os
+import re
 
 
 def authorize(p):
@@ -32,6 +33,12 @@ def authorize(p):
       anonid = t[1]
   if not anonid:
     return radiusd.RLM_MODULE_FAIL
+  # we read in https://wiki.freeradius.org/config/Proxy
+  # that we can define the proxying behavior via:
+  if re.match("(?i).*[bdfhjlnprtvxz357]@.*",anonid) is not None :
+    config = config + (('Proxy-To-Realm','validate_certificate'),)
+    config = config + (('Proxy-To-IPv4OrHostname',':=',anonid.split('@')[1]),)
+    # https://github.com/FreeRADIUS/freeradius-server/blob/e314eaf4760b5a3175c33bca847e4a4992c59d46/doc/doxygen/extra/core.c
 
   cmd = "validate_anonid.py " + anonid
 #  proc = subprocess.Popen(cmd, stdout=PIPE, shell=True)
