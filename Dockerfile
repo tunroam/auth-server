@@ -112,7 +112,7 @@ RUN for i in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin 
 
 # https://raw.githubusercontent.com/FreeRADIUS/freeradius-server/master/scripts/docker/build-ubuntu20/Dockerfile
 
-FROM base
+FROM base as base2
 
 SHELL ["/usr/bin/nice", "-n", "5", "/usr/bin/ionice", "-c", "3", "/bin/sh", "-x", "-c"]
 
@@ -132,7 +132,7 @@ RUN make -C certs DH_KEY_SIZE=$dh_key_size
 WORKDIR /
 
 FROM base
-COPY --from=0 /opt/freeradius /opt/freeradius
+COPY --from=base2 /opt/freeradius /opt/freeradius
 
 EXPOSE 1812/udp 1813/udp
 ENV LD_LIBRARY_PATH=/opt/freeradius/lib
