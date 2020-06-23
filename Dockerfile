@@ -1,27 +1,140 @@
-# This Dockerfile can be used while debugging the auth. server
-# docker build -t freerad .
-# docker run -it --rm -v $PWD/python3wrapper.py:/etc/freeradius/3.0/mods-config/python/python3wrapper.py freerad
-# /testscript.sh # <= inside container
+# https://raw.githubusercontent.com/FreeRADIUS/freeradius-server/master/scripts/docker/build-ubuntu20/Dockerfile.deps
 
-FROM debian
+ARG from=ubuntu:20.04
+FROM ${from} AS base
 
-RUN apt update; \
-  apt upgrade -y; \
-  apt dist-upgrade -y; \
-apt install -y \
-  python \
-  python3; \
-apt install -y \
-  freeradius \
-  hostapd \
-  nftables \
-  curl \
-  bridge-utils \
-  freeradius-python2 vim
+ARG osname=focal
 
-WORKDIR /src
-COPY * /src/
-RUN ./install.sh
-WORKDIR /etc/freeradius/3.0/
-#ENV PREPROCESS_IGNORE_SOCKET_TESTS TRUE
+SHELL ["/usr/bin/nice", "-n", "5", "/usr/bin/ionice", "-c", "3", "/bin/sh", "-x", "-c"]
+
+ONBUILD ARG osname=${osname}
+
+ARG APT_OPTS="-y --option=Dpkg::options::=--force-unsafe-io --no-install-recommends"
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+#  Development utilities
+    apt-get install $APT_OPTS \
+        devscripts \
+        equivs \
+        git \
+        quilt \
+        rsync \
+        software-properties-common \
+        wget && \
+#  Compilers
+    apt-get install $APT_OPTS \
+        g++ && \
+    bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" && \
+#  eapol_test dependencies
+    apt-get install $APT_OPTS \
+        libnl-3-dev \
+        libnl-genl-3-dev && \
+#  cmake to build libkqueue
+    apt-get install $APT_OPTS \
+        cmake
+
+#
+#  Documentation build dependecies
+#
+
+#  - doxygen & JSON.pm
+RUN apt-get install $APT_OPTS \
+        doxygen \
+        graphviz \
+        libjson-perl
+#  - antora (npm needed)
+RUN bash -c "$(wget -O - https://deb.nodesource.com/setup_10.x)" && \
+    apt-get install $APT_OPTS \
+        nodejs
+RUN npm i -g @antora/cli@2.1 @antora/site-generator-default@2.1
+#  - pandoc
+RUN wget $(wget -qO - https://api.github.com/repos/jgm/pandoc/releases/latest | sed -ne 's/.*"browser_download_url".*"\(.*deb\)"/\1/ p') && \
+    find . -mindepth 1 -maxdepth 1 -type f -name 'pandoc-*.deb' -print0 | \
+        xargs -0 -r apt-get install $APT_OPTS && \
+    find . -mindepth 1 -maxdepth 1 -type f -name 'pandoc-*.deb' -delete
+#  - asciidoctor
+RUN apt-get install $APT_OPTS \
+        ruby-dev
+RUN gem install asciidoctor
+
+
+#
+#  Setup a src dir in /usr/local
+#
+RUN mkdir -p /usr/local/src/repositories
+WORKDIR /usr/local/src/repositories
+
+
+#
+#  Grab libkqueue and build
+#
+RUN git clone --branch master --depth=1 https://github.com/mheily/libkqueue.git
+
+WORKDIR libkqueue
+RUN cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ./ && \
+    make && \
+    cpack -G DEB && \
+    dpkg -i --force-all ./libkqueue*.deb
+
+
+#
+#  Shallow clone the FreeRADIUS source
+#
+WORKDIR /usr/local/src/repositories
+ARG source=https://github.com/FreeRADIUS/freeradius-server.git
+ARG branch=master
+RUN git clone --depth 1 --no-single-branch -b ${branch} ${source}
+
+
+#
+#  Install build dependencies for all branches from v3 onwards
+#
+WORKDIR freeradius-server
+RUN for i in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin 2>/dev/null | sed -e 's#origin/##' | egrep "^(v[3-9]*\.[0-9x]*\.x|master|${branch})$" | sort -u); \
+    do \
+        git checkout $i; \
+        if [ -e ./debian/control.in ] ; then \
+            debian/rules debian/control ; \
+        fi ; \
+        mk-build-deps -irt"apt-get -o Debug::pkgProblemResolver=yes $APT_OPTS" debian/control ; \
+        apt-get -y remove libiodbc2-dev ; \
+    done
+
+
+
+
+
+
+
+
+
+# https://raw.githubusercontent.com/FreeRADIUS/freeradius-server/master/scripts/docker/build-ubuntu20/Dockerfile
+
+FROM base
+
+SHELL ["/usr/bin/nice", "-n", "5", "/usr/bin/ionice", "-c", "3", "/bin/sh", "-x", "-c"]
+
+
+ARG cc=gcc
+ARG branch=master
+ARG dh_key_size=2048
+
+WORKDIR /usr/local/src/repositories/freeradius-server
+RUN git checkout ${branch}
+RUN CC=${cc} ./configure --prefix=/opt/freeradius
+RUN make -j$(($(getconf _NPROCESSORS_ONLN) + 1))
+RUN make install
+WORKDIR /opt/freeradius/etc/raddb
+RUN sed -i -e 's/allow_vulnerable_openssl.*/allow_vulnerable_openssl = yes/' radiusd.conf
+RUN make -C certs DH_KEY_SIZE=$dh_key_size
+WORKDIR /
+
+FROM base
+COPY --from=0 /opt/freeradius /opt/freeradius
+
+EXPOSE 1812/udp 1813/udp
+ENV LD_LIBRARY_PATH=/opt/freeradius/lib
+CMD ["/opt/freeradius/sbin/radiusd", "-X"]
 
