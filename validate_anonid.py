@@ -128,7 +128,7 @@ def socket2rule(addr: str, ipproto: int, port: str):
 def parseAnonymousIdentity(anonid: str):
   if '@' not in anonid:
     return "ERROR no delimiter found"
-  if len(anonid.split('@')) is not 2:
+  if len(anonid.split('@')) != 2:
     return "ERROR please use userpart@realmpart"
   user, realm = anonid.split('@')
   if len(user) < 3:

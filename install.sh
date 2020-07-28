@@ -24,6 +24,7 @@ apt install -y \
 # TODO, look at the proxy file from proxying branch
 #cp append2proxy.conf /opt/freeradius/etc/raddb/
 cp validate_anonid.py /usr/local/bin/
+chmod +x /usr/local/bin/validate_anonid.py
 
 ln -s /opt/freeradius/sbin/radiusd /usr/local/bin/freeradius
 ln -s /opt/freeradius/bin/radclient /usr/local/bin/radclient
