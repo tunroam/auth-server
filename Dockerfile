@@ -138,3 +138,9 @@ EXPOSE 1812/udp 1813/udp
 ENV LD_LIBRARY_PATH=/opt/freeradius/lib
 CMD ["/opt/freeradius/sbin/radiusd", "-X"]
 
+RUN apt install -y vim python3 git curl
+COPY validate_anonid.py /usr/local/bin/
+COPY install.sh /
+RUN /install.sh
+ENTRYPOINT ["/testscript.sh"]
+

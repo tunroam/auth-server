@@ -1,0 +1,5 @@
+
+    update control {
+        &Cleartext-Password := "password"
+    }
+
