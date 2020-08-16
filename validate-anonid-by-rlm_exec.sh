@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -z "$TUNROAM_EXEC_DEBUG_PATH" ]; then
   TUNROAM_EXEC_DEBUG_PATH=/dev/null
@@ -14,9 +14,9 @@ result_code=$?
 
 echo "$result_msg" >> $TUNROAM_EXEC_DEBUG_PATH
 
-if [ "$result_code" == "1" ]; then
-  echo "$result_msg"
-else
+if [[ "$result_code" == "0" ]]; then
   echo "valid_anonid"
+else
+  echo "$result_msg"
 fi
 exit $result_code
