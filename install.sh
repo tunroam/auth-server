@@ -15,13 +15,14 @@ if [ ! -f /var/log/apt/history.log ] || \
   apt dist-upgrade -y
 fi
 
-apt install -y \
-  python3
-# we first install python, so its already installed when installing freeradius
+# when using rlm_python we first installed python, so its already installed when installing freeradius
+# but this isn't needed anymore since we use rlm_exec now
 # https://stackoverflow.com/questions/45371531/failed-to-link-to-module-rlm-python-rlm-python-so
 apt install -y \
+  python3 \
   git \
-  curl
+  curl \
+  dnsutils
 
 # TODO, look at the proxy file from proxying branch
 #cp append2proxy.conf /opt/freeradius/etc/raddb/
@@ -31,6 +32,7 @@ ln -s $FREERADIUS_ROOTDIR/sbin/radiusd /usr/local/bin/freeradius
 ln -s $FREERADIUS_ROOTDIR/bin/radclient /usr/local/bin/radclient
 ln -s $FREERADIUS_ROOTDIR/etc/raddb/radiusd.conf /opt/freeradius/etc/raddb/freeradius.conf
 cp mods-enabled_exec.conf "$FREERADIUS_ROOTDIR/etc/raddb/mods-enabled/exec" || echo "already done in Dockerfile"
+cat /auth.conf >> $FREERADIUS_ROOTDIR/etc/raddb/sites-enabled/default
 
 cd $FREERADIUS_ROOTDIR/etc/raddb
 
@@ -41,7 +43,7 @@ for f in default inner-tunnel; do
   grep -B 9999 filter_username $fp > /tmp/tophalf
   grep -A 9999 filter_username $fp|grep -v filter_username > /tmp/bottomhalf
   mv /tmp/tophalf $fp
-  cat /snippet.conf >> $fp
+  cat /snippet_$f.conf >> $fp
   cat /tmp/bottomhalf >> $fp
   echo "$fp updated to include snippet"
 done
