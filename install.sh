@@ -30,16 +30,21 @@ cp validate_anonid.py /usr/local/bin/ || echo already done in Dockerfile
 ln -s $FREERADIUS_ROOTDIR/sbin/radiusd /usr/local/bin/freeradius
 ln -s $FREERADIUS_ROOTDIR/bin/radclient /usr/local/bin/radclient
 ln -s $FREERADIUS_ROOTDIR/etc/raddb/radiusd.conf /opt/freeradius/etc/raddb/freeradius.conf
-cp mods-enabled_exec.conf "$FREERADIUS_ROOTDIR/etc/raddb/mods-enabled/exec" || echo already don in Dockerfile
+cp mods-enabled_exec.conf "$FREERADIUS_ROOTDIR/etc/raddb/mods-enabled/exec" || echo "already done in Dockerfile"
 
 cd $FREERADIUS_ROOTDIR/etc/raddb
 
 # in section authorize in sites-enabled/default
 # place call under filter_username
-sed -i 's/filter_username$/filter_username\nexec/g' \
-  sites-enabled/default \
-  sites-enabled/inner-tunnel
-# The inner-tunnel needs the clear-text password
+for f in default inner-tunnel; do
+  fp=sites-enabled/$f
+  grep -B 9999 filter_username $fp > /tmp/tophalf
+  grep -A 9999 filter_username $fp|grep -v filter_username > /tmp/bottomhalf
+  mv /tmp/tophalf $fp
+  cat /snippet.conf >> $fp
+  cat /tmp/bottomhalf >> $fp
+  echo "$fp updated to include snippet"
+done
 
 cd -
 

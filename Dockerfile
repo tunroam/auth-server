@@ -141,6 +141,7 @@ CMD ["/opt/freeradius/sbin/radiusd", "-X"]
 RUN apt install -y vim python3 git curl
 COPY validate_anonid.py /usr/local/bin/
 COPY mods-enabled_exec.conf /opt/freeradius/etc/raddb/mods-enabled/exec
+COPY snippet.conf /
 COPY /testscript.sh /
 COPY install.sh /
 RUN /install.sh

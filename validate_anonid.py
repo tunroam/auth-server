@@ -215,7 +215,7 @@ def validateAnonymousIdentity(anonid: str):
 
 
 
-# NOTE that the exit codes in python are different from exec !!!!
+# NOTE that the exit codes in rlm_python are different from rlm_exec !!!!
 # https://github.com/FreeRADIUS/freeradius-server/blob/v3.0.x/src/modules/rlm_python/radiusd.py
 # https://github.com/FreeRADIUS/freeradius-server/blob/master/raddb/mods-available/exec
 #  | = 0  | ok        | the module succeeded.
@@ -227,29 +227,21 @@ EXEC_FAIL   = 2
 
 if __name__ == '__main__':
   example_anonid = '11443_1153_32_33a@8.8.8.8'
-  reply = ( ('Reply-Message', 'reply from freeradius to hostapd'), )
-  config = ( ('Cleartext-Password', 'password'), ) # The hardcode password as in spec.
+  reply = 'reply from freeradius to hostapd'
 
   if len(argv) != 2:
-    reply = ( ('Reply-Message',"ERROR we expect only one Anonymous-identity"), )
+    reply = "ERROR we expect only one Anonymous-identity"
     exitcode = EXEC_FAIL
   else:
 	  anonid = argv[1].split('=')[-1]
 	
 	  result = validateAnonymousIdentity(anonid)
 	  if "error" in result.lower():
-	    reply = ( ('Reply-Message', result), )
+	    reply = result
 	    exitcode = EXEC_REJECT
 	  else:
 	    exitcode = EXEC_OK
 
-  # TODO The following source:
-  # https://github.com/FreeRADIUS/freeradius-server/blob/v3.0.x/src/modules/rlm_python/example.py#L79
-  # tells us that we can't update the request in this old version
-  # therefore we do not support proxying for now
-  #result_tuple = exitcode, reply, config
-  #print(result_tuple)
   print(reply)
-  print(config)
   exit(exitcode)
 
