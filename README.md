@@ -16,6 +16,9 @@ isn't relevant since we do a call to an eternal server.
 - https://github.com/FreeRADIUS/freeradius-server/blob/dc886b3208a405f736441eead7e537fc505e6cc2/scripts/exec-program-wait
 - https://networkradius.com/doc/3.0.10/unlang/home.html
 - https://github.com/FreeRADIUS/freeradius-server/issues/325
+- https://github.com/FreeRADIUS/freeradius-server/blob/master/doc/antora/modules/installation/pages/upgrade.adoc#proxying
+- http://lists.freeradius.org/pipermail/freeradius-users/2015-July/078760.html
+- http://lists.cistron.nl/pipermail/freeradius-users/2015-May/077390.html
 
 
 ## Decision tree snippets
@@ -38,3 +41,12 @@ The `inner-tunnel` doesn't care about the 'is proxied'
 It also does not care about the need for proxying,
 since the `default` server only lets it reach the
 `inner-tunnel` if it does not needs to be proxied to a remote machine.
+
+
+## Possible solution to proxying
+
+If we are unable to implement it in freeradius,
+we can always generate freeradius config on the fly,
+start a new server and proxy it to that one....
+
+But this seems too ugly.
