@@ -139,15 +139,21 @@ ENV LD_LIBRARY_PATH=/opt/freeradius/lib
 CMD ["/opt/freeradius/sbin/radiusd", "-X"]
 
 RUN apt install -y vim python3 git curl dnsutils
-COPY validate_anonid.py /usr/local/bin/
-COPY validate-anonid-by-rlm_exec.sh /usr/local/bin/
-COPY mods-enabled_exec.conf /opt/freeradius/etc/raddb/mods-enabled/exec
-COPY proxy-radius.conf /opt/freeradius/etc/raddb/mods-enabled/
-COPY *.conf /
-COPY /testscript.sh /
+RUN rm -f /opt/freeradius/etc/raddb/mods-enabled/echo
+RUN ln -s /opt/freeradius/etc/raddb/mods-available/radius /opt/freeradius/etc/raddb/mods-enabled/radius
+COPY snippet*.conf /
 COPY install.sh /
 RUN /install.sh
 ENV TUNROAM_EXEC_DEBUG_PATH /var/log/validate_anonid.log
 ENTRYPOINT ["/testscript.sh"]
-WORKDIR /opt/freeradius/etc/raddb #/usr/local/src/repositories/freeradius-server
+WORKDIR /usr/local/src/repositories/freeradius-server
+WORKDIR /opt/freeradius/etc/raddb
+
+COPY /testscript.sh /
+COPY validate_anonid.py /usr/local/bin/
+COPY validate-anonid-by-rlm_exec.sh /usr/local/bin/
+COPY mods-enabled_exec.conf /opt/freeradius/etc/raddb/mods-available/exec
+COPY proxy-radius.conf /opt/freeradius/etc/raddb/mods-available/
+RUN ln -fs /opt/freeradius/etc/raddb/mods-available/exec /opt/freeradius/etc/raddb/mods-enabled/exec
+RUN ln -s /opt/freeradius/etc/raddb/mods-available/proxy-radius.conf /opt/freeradius/etc/raddb/mods-enabled/proxy-radius.conf
 

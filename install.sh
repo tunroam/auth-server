@@ -48,6 +48,12 @@ for f in default inner-tunnel; do
   echo "$fp updated to include snippet"
 done
 
+grep -B 9999 'authenticate mschap' sites-enabled/default|grep -v 'authenticate mschap' > /tmp/tophalf
+grep -A 9999 'authenticate mschap' sites-enabled/default > /tmp/bottomhalf
+mv /tmp/tophalf          sites-enabled/default
+cat snippet_auth.conf >> sites-enabled/default
+cat /tmp/bottomhalf   >> sites-enabled/default
+
 cd -
 
 if [[ -f /.dockerenv ]]; then
