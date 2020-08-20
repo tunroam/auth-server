@@ -32,14 +32,13 @@ ln -s $FREERADIUS_ROOTDIR/sbin/radiusd /usr/local/bin/freeradius
 ln -s $FREERADIUS_ROOTDIR/bin/radclient /usr/local/bin/radclient
 ln -s $FREERADIUS_ROOTDIR/etc/raddb/radiusd.conf /opt/freeradius/etc/raddb/freeradius.conf
 cp mods-enabled_exec.conf "$FREERADIUS_ROOTDIR/etc/raddb/mods-enabled/exec" || echo "already done in Dockerfile"
-cat /auth.conf >> $FREERADIUS_ROOTDIR/etc/raddb/sites-enabled/default
 
 cd $FREERADIUS_ROOTDIR/etc/raddb
 
 # in section authorize in sites-enabled/default
 # place call under filter_username
 for f in default inner-tunnel; do
-  fp=sites-enabled/$f
+  fp=sites-available/$f
   grep -B 9999 filter_username $fp > /tmp/tophalf
   grep -A 9999 filter_username $fp|grep -v filter_username > /tmp/bottomhalf
   mv /tmp/tophalf $fp
@@ -48,11 +47,12 @@ for f in default inner-tunnel; do
   echo "$fp updated to include snippet"
 done
 
-grep -B 9999 'authenticate mschap' sites-enabled/default|grep -v 'authenticate mschap' > /tmp/tophalf
-grep -A 9999 'authenticate mschap' sites-enabled/default > /tmp/bottomhalf
-mv /tmp/tophalf          sites-enabled/default
-cat snippet_auth.conf >> sites-enabled/default
-cat /tmp/bottomhalf   >> sites-enabled/default
+fp=sites-available/default
+grep -B 9999 'authenticate\ mschap' $fp|grep -v 'authenticate\ mschap' > /tmp/tophalf
+grep -A 9999 'authenticate\ mschap' $fp > /tmp/bottomhalf
+mv /tmp/tophalf           $fp
+cat /snippet_auth.conf >> $fp
+cat /tmp/bottomhalf    >> $fp
 
 cd -
 
