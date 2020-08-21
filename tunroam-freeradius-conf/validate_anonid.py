@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
+# This script is used to validate an anonymous identity
+# as mentioned in the Tunroam protocol.
+# It does port tests as mentioned in the protocol.
+
+# One can use the following during debugging:
 # export PREPROCESS_IGNORE_SOCKET_TESTS=TRUE
+
 
 # import pesp # we use RAW sockets instead
 import ipaddress
@@ -11,7 +17,7 @@ from sys import argv
 
 # The following code is to get the radiusd script
 #/etc/freeradius/3.0/mods-config/python/radiusd.py
-# Its commented out since we use it in the python2 code
+# Its commented out since we use rlm_python(2) or rlm_exec now
 #import os
 #FREERADIUSCONFDIR = '/etc/freeradius/'
 #FREERADIUSCONFDIR += os.listdir(FREERADIUSCONFDIR)[0] # get version number
